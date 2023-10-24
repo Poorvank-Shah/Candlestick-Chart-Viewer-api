@@ -17,6 +17,7 @@ app.get('/api/search/:keyword', async (req, res) => {
     const { keyword } = req.params;
     console.log(keyword)
     try {
+        
         const apiUrl = `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${keyword}&apikey=${ALPHA_VANTAGE_API_KEY}`;
 
         const response = await fetch(apiUrl);
