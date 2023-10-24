@@ -13,7 +13,7 @@ app.use(cors());
 
 const ALPHA_VANTAGE_API_KEY = 'XOS0F8F51TL70A31';
 
-app.get('/api/search/:keyword', async (req, res) => {
+app.get('/search/:keyword', async (req, res) => {
     const { keyword } = req.params;
     console.log(keyword)
     try {
