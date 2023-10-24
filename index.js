@@ -11,7 +11,7 @@ const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 app.use(cors());
 
-const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+const ALPHA_VANTAGE_API_KEY = 'XOS0F8F51TL70A31';
 
 app.get('/api/search/:keyword', async (req, res) => {
     const { keyword } = req.params;
