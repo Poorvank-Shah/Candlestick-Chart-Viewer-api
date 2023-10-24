@@ -17,7 +17,7 @@ app.get('/api/search/:keyword', async (req, res) => {
     const { keyword } = req.params;
     console.log(keyword)
     try {
-        
+
         const apiUrl = `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${keyword}&apikey=${ALPHA_VANTAGE_API_KEY}`;
 
         const response = await fetch(apiUrl);
@@ -51,7 +51,8 @@ app.get('/api/globalstatus', async (req, res) => {
 
         const response = await fetch(apiUrl);
         const data = await response.json();
-        res.json(data["markets"]);
+        res.json(data);
+
     } catch (error) {
         console.error('Error fetching Global market Status', error.message);
         res.status(500).json({ error: 'Internal Server Error' });
