@@ -161,10 +161,10 @@ function getLiveData(timeframe, lastEntry, clampMax, currentTime) {
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-    const randomOpen = clamp(parseFloat(lastEntry.open) + randomChange(), clampMax - 4, clampMax).toFixed(4);
-    const randomHigh = clamp(parseFloat(lastEntry.high) + randomChange(), clampMax - 4, clampMax).toFixed(4);
-    const randomLow = clamp(parseFloat(lastEntry.low) + randomChange(), clampMax - 4, clampMax).toFixed(4);
-    const randomClose = clamp(parseFloat(lastEntry.close) + randomChange(), clampMax - 4, clampMax).toFixed(4);
+    const randomOpen = clamp(parseFloat(lastEntry.open) + randomChange(), clampMax - 4, clampMax).toFixed(2);
+    const randomHigh = clamp(parseFloat(lastEntry.high) + randomChange(), clampMax - 4, clampMax).toFixed(2);
+    const randomLow = clamp(parseFloat(lastEntry.low) + randomChange(), clampMax - 4, clampMax).toFixed(2);
+    const randomClose = clamp(parseFloat(lastEntry.close) + randomChange(), clampMax - 4, clampMax).toFixed(2);
 
     lastEntry = {
         open: parseFloat(randomOpen),
