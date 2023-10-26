@@ -101,45 +101,66 @@ async function getHistoricalData(symbol, timeframe) {
 }
 
 /* **********Live Data************** */
-
+let connectedClient=null;
 const wss = new WebSocket.Server({ server });
 wss.on('connection', (ws) => {
+
+    if (connectedClient) {
+        ws.close();
+        return;
+    }
+    connectedClient = ws;
     let liveData, lastData, tf, interval, clampMax;
     console.log("client connected")
 
+
+    const setupInterval = (tf, minutes, lastData, clampMax) => {
+        const currentDate = new Date();
+        const intervalDuration = minutes * 60000;
+        let currentTime = new Date(currentDate.getTime() + ((minutes - currentDate.getMinutes() % minutes) * 60000)).getTime();
+
+        return setInterval(() => {
+            liveData = getLiveData(tf, lastData, clampMax, currentTime);
+            lastData = liveData;
+            currentTime += intervalDuration;
+            ws.send(JSON.stringify({ liveData }));
+        }, 10000);
+    };
+
+    // Example usage
     ws.on('message', (message) => {
         const parsedMessage = JSON.parse(message);
         tf = parsedMessage.timeframe;
         lastData = (parsedMessage.lastValue ?? {})
-        clampMax = parseFloat(lastData.open) + 2;
-        let currentTime;
+        clampMax = [parseFloat(lastData[0].open) + 2, parseFloat(lastData[1].value) + 10000000];
 
-        // Example: Send a message to the client every second
-        if (tf === '1min') {
-            currentTime = Math.floor(new Date().getTime());
-            interval = setInterval(() => {
-                console.log("requesting live")
-                liveData = getLiveData(tf, lastData, clampMax, currentTime);
-                console.log('livedata = ' + liveData)
-                lastData = liveData
-                currentTime += 1 * 60 * 1000;
-                console.log("updating live")
-                ws.send(JSON.stringify({ liveData }));
-            }, 10000);
-
+        // Clear existing interval if any
+        if (interval) {
+            clearInterval(interval);
         }
-        else if (tf === '5min') {
-            currentTime = Math.floor(new Date().getTime()) / (5 * 60 * 1000) * (5 * 60 * 1000);
 
-            interval = setInterval(() => {
-                liveData = getLiveData(tf, lastData, clampMax, currentTime);
-                lastData = liveData
-                currentTime += 5 * 60 * 1000;
-                ws.send(JSON.stringify({ liveData: liveData }));
-            }, 10000);
+        // Set up interval based on timeframe
+        if (tf === '1min') {
+            interval = setupInterval(tf, 1, lastData, clampMax);
+        } else if (tf === '5min') {
+            interval = setupInterval(tf, 5, lastData, clampMax);
+        } else if (tf === '15min') {
+            interval = setupInterval(tf, 15, lastData, clampMax);
+        } else if (tf === '30min') {
+            interval = setupInterval(tf, 30, lastData, clampMax);
+        } else if (tf === '60min') {
+            interval = setupInterval(tf, 60, lastData, clampMax);
+        }
+        // else if (tf === 'Daily') {
+        //     interval = setupInterval(tf, 24 * 60, lastData, clampMax);
+        // }
+        else if (tf === 'Weekly') {
+            interval = setupInterval(tf, 7 * 24 * 60, lastData, clampMax);
+        } else if (tf === 'Monthly') {
+            interval = setupInterval(tf, 30 * 24 * 60, lastData, clampMax);
         }
     });
-
+    
     ws.on('close', () => {
         console.log('Client disconnected');
         clearInterval(interval);
@@ -150,7 +171,7 @@ wss.on('connection', (ws) => {
 // Function to get live data randomly
 function getLiveData(timeframe, lastEntry, clampMax, currentTime) {
 
-    let randomChange;
+    let randomChange, randomVol;
     if (['Daily', 'Weekly', 'Monthly'].includes(timeframe)) {
         randomChange = () => { return ((Math.random() * 6) - 3) }; // Random value between -3 and +3
 
@@ -158,15 +179,18 @@ function getLiveData(timeframe, lastEntry, clampMax, currentTime) {
     else if (['1min', '5min', '15min', '30min', '60min'].includes(timeframe)) {
         randomChange = () => { return ((Math.random() * 2) - 1) }; // Random value between -1 and +1
     }
+    randomVol = () => {
+        return Math.round(Math.random() * 2000000) - 1000000;
+    };
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-    const randomOpen = clamp(parseFloat(lastEntry.open) + randomChange(), clampMax - 4, clampMax).toFixed(2);
-    const randomHigh = clamp(parseFloat(lastEntry.high) + randomChange(), clampMax - 4, clampMax).toFixed(2);
-    const randomLow = clamp(parseFloat(lastEntry.low) + randomChange(), clampMax - 4, clampMax).toFixed(2);
-    const randomClose = clamp(parseFloat(lastEntry.close) + randomChange(), clampMax - 4, clampMax).toFixed(2);
-
-    lastEntry = {
+    const randomOpen = clamp(parseFloat(lastEntry[0].open) + randomChange(), clampMax[0] - 4, clampMax[0]).toFixed(2);
+    const randomHigh = clamp(parseFloat(lastEntry[0].high) + randomChange(), clampMax[0] - 4, clampMax[0]).toFixed(2);
+    const randomLow = clamp(parseFloat(lastEntry[0].low) + randomChange(), clampMax[0] - 4, clampMax[0]).toFixed(2);
+    const randomClose = clamp(parseFloat(lastEntry[0].close) + randomChange(), clampMax[0] - 4, clampMax[0]).toFixed(2);
+    const randomVolume = clamp(parseFloat(lastEntry[1].value) + randomVol(), clampMax[1] - 20000000, clampMax[1]);
+    const ohlcEntry = {
         open: parseFloat(randomOpen),
         high: parseFloat(randomHigh),
         low: parseFloat(randomLow),
@@ -174,7 +198,15 @@ function getLiveData(timeframe, lastEntry, clampMax, currentTime) {
         time: currentTime / 1000
     };
 
-    // console.log(lastEntry)
+    const volumeEntry = {
+        value: parseFloat(randomVolume),
+        time: currentTime / 1000,
+        color: parseFloat(randomOpen) > parseFloat(randomClose) ? "#ef5350" : "#26a69a"
+    };
+
+    lastEntry = [ohlcEntry, volumeEntry];
+    // console.log("live Entry", lastEntry)
+
     return lastEntry;
 };
 
