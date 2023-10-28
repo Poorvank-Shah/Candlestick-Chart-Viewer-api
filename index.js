@@ -105,10 +105,10 @@ let connectedClient=null;
 const wss = new WebSocket.Server({ server });
 wss.on('connection', (ws) => {
 
-    if (connectedClient) {
-        ws.close();
-        return;
-    }
+    // if (connectedClient) {
+    //     ws.close();
+    //     return;
+    // }
     connectedClient = ws;
     let liveData, lastData, tf, interval, clampMax;
     console.log("client connected")
