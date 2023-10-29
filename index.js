@@ -132,7 +132,7 @@ wss.on('connection', (ws) => {
         const parsedMessage = JSON.parse(message);
         tf = parsedMessage.timeframe;
         lastData = (parsedMessage.lastValue ?? {})
-        clampMax = [parseFloat(lastData[0].open) + 2, parseFloat(lastData[1].value) + 10000000];
+        clampMax = [parseFloat(lastData[0].open) + 2, parseFloat(lastData[1].value) + 100000];
 
         // Clear existing interval if any
         if (interval) {
@@ -174,14 +174,14 @@ function getLiveData(timeframe, lastEntry, clampMax, currentTime) {
     let randomChange, randomVol;
     if (['Daily', 'Weekly', 'Monthly'].includes(timeframe)) {
         randomChange = () => { return ((Math.random() * 6) - 3) }; // Random value between -3 and +3
+        randomVol = () => { return Math.round(Math.random() * 2000000) - 1000000; };
 
     }
     else if (['1min', '5min', '15min', '30min', '60min'].includes(timeframe)) {
         randomChange = () => { return ((Math.random() * 2) - 1) }; // Random value between -1 and +1
+        randomVol = () => { return Math.round(Math.random() * 2000) - 1000; };
+
     }
-    randomVol = () => {
-        return Math.round(Math.random() * 2000000) - 1000000;
-    };
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -189,7 +189,7 @@ function getLiveData(timeframe, lastEntry, clampMax, currentTime) {
     const randomHigh = clamp(parseFloat(lastEntry[0].high) + randomChange(), clampMax[0] - 4, clampMax[0]).toFixed(2);
     const randomLow = clamp(parseFloat(lastEntry[0].low) + randomChange(), clampMax[0] - 4, clampMax[0]).toFixed(2);
     const randomClose = clamp(parseFloat(lastEntry[0].close) + randomChange(), clampMax[0] - 4, clampMax[0]).toFixed(2);
-    const randomVolume = clamp(parseFloat(lastEntry[1].value) + randomVol(), clampMax[1] - 20000000, clampMax[1]);
+    const randomVolume = clamp(parseFloat(lastEntry[1].value) + randomVol(), clampMax[1] - 200000, clampMax[1]);
     const ohlcEntry = {
         open: parseFloat(randomOpen),
         high: parseFloat(randomHigh),
